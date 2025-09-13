@@ -1,0 +1,172 @@
+package com.novaid.ideax.service.auth.impl;
+
+import com.novaid.ideax.dto.account.AccountResponse;
+import com.novaid.ideax.dto.account.InvestorProfileResponse;
+import com.novaid.ideax.dto.account.StartupProfileResponse;
+import com.novaid.ideax.dto.login.LoginRequestDTO;
+import com.novaid.ideax.dto.login.LoginResponseDTO;
+import com.novaid.ideax.dto.register.InvestorRegisterDTO;
+import com.novaid.ideax.dto.register.StartupRegisterDTO;
+import com.novaid.ideax.entity.auth.Account;
+import com.novaid.ideax.entity.auth.InvestorProfile;
+import com.novaid.ideax.entity.auth.StartupProfile;
+import com.novaid.ideax.enums.Role;
+import com.novaid.ideax.enums.Status;
+import com.novaid.ideax.exception.AuthenticationException;
+import com.novaid.ideax.repository.auth.AccountRepository;
+import com.novaid.ideax.repository.auth.InvestorRepository;
+import com.novaid.ideax.repository.auth.StartupRepository;
+import com.novaid.ideax.service.auth.AuthenticationService;
+import com.novaid.ideax.service.auth.EmailService;
+import com.novaid.ideax.service.auth.TokenService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class AuthenticationServiceImpl implements AuthenticationService {
+
+    private final AuthenticationManager authenticationManager;
+    private final AccountRepository accountRepository;
+    private final StartupRepository startupRepository;
+    private final InvestorRepository investorRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
+    private final EmailService emailService;
+
+    // === REGISTER STARTUP ===
+    @Override
+    public void registerStartup(StartupRegisterDTO dto) {
+        validatePassword(dto.getPassword(), dto.getConfirmPassword());
+        checkEmailExists(dto.getEmail());
+
+        Account account = Account.builder()
+                .email(dto.getEmail())
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .role(Role.START_UP)
+                .status(Status.ACTIVE)
+                .build();
+        accountRepository.save(account);
+
+        StartupProfile profile = StartupProfile.builder()
+                .fullName(dto.getFullName())
+                .startupName(dto.getStartupName())
+                .companyWebsite(dto.getCompanyWebsite())
+                .companyLogo(dto.getCompanyLogo())
+                .aboutUs(dto.getAboutUs())
+                .account(account)
+                .build();
+        startupRepository.save(profile);
+
+        // emailService.sendWelcomeEmail(dto.getEmail(), dto.getFullName());
+    }
+
+    // === REGISTER INVESTOR ===
+    @Override
+    public void registerInvestor(InvestorRegisterDTO dto) {
+        validatePassword(dto.getPassword(), dto.getConfirmPassword());
+        checkEmailExists(dto.getEmail());
+
+        Account account = Account.builder()
+                .email(dto.getEmail())
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .role(Role.INVESTOR)
+                .status(Status.ACTIVE)
+                .build();
+        accountRepository.save(account);
+
+        InvestorProfile profile = InvestorProfile.builder()
+                .fullName(dto.getFullName())
+                .organization(dto.getOrganization())
+                .investmentFocus(dto.getInvestmentFocus())
+                .investmentRange(dto.getInvestmentRange())
+                .investmentExperience(dto.getInvestmentExperience())
+                .account(account)
+                .build();
+        investorRepository.save(profile);
+
+        // emailService.sendWelcomeEmail(dto.getEmail(), dto.getFullName());
+    }
+
+    // === LOGIN ===
+    @Override
+    public LoginResponseDTO login(LoginRequestDTO loginRequest) {
+        Account account = accountRepository.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new AuthenticationException("User not found"));
+
+        if (!passwordEncoder.matches(loginRequest.getPassword(), account.getPassword())) {
+            throw new AuthenticationException("Invalid username or password");
+        }
+
+        AccountResponse accountResponse = AccountResponse.builder()
+                .id(account.getId())
+                .email(account.getEmail())
+                .role(account.getRole())
+                .status(account.getStatus())
+                .token(tokenService.generateToken(account))
+                .build();
+
+        LoginResponseDTO response = new LoginResponseDTO();
+        response.setAccount(accountResponse);
+
+        if (account.getRole() == Role.START_UP) {
+            StartupProfile profile = startupRepository.findByAccount(account)
+                    .orElseThrow(() -> new AuthenticationException("Startup profile not found"));
+            // dùng DTO bạn đã định nghĩa
+            StartupProfileResponse dto = StartupProfileResponse.builder()
+                    .fullName(profile.getFullName())
+                    .startupName(profile.getStartupName())
+                    .companyWebsite(profile.getCompanyWebsite())
+                    .companyLogo(profile.getCompanyLogo())
+                    .aboutUs(profile.getAboutUs())
+                    .build();
+            response.setStartupProfile(dto);
+        } else if (account.getRole() == Role.INVESTOR) {
+            InvestorProfile profile = investorRepository.findByAccount(account)
+                    .orElseThrow(() -> new AuthenticationException("Investor profile not found"));
+            InvestorProfileResponse dto = InvestorProfileResponse.builder()
+                    .fullName(profile.getFullName())
+                    .organization(profile.getOrganization())
+                    .investmentFocus(profile.getInvestmentFocus())
+                    .investmentRange(profile.getInvestmentRange())
+                    .investmentExperience(profile.getInvestmentExperience())
+                    .build();
+            response.setInvestorProfile(dto);
+        }
+
+        return response;
+    }
+
+
+    // === SPRING SECURITY ===
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Account account = accountRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+
+        return org.springframework.security.core.userdetails.User
+                .withUsername(account.getEmail())
+                .password(account.getPassword())
+                .authorities(account.getRole().name())
+                .build();
+    }
+
+    // === HELPER METHODS ===
+    private void validatePassword(String password, String confirmPassword) {
+        if (!password.equals(confirmPassword)) {
+            throw new AuthenticationException("Password and confirm password do not match");
+        }
+    }
+
+    private void checkEmailExists(String email) {
+        if (accountRepository.existsByEmail(email)) {
+            throw new AuthenticationException("Email already in use!");
+        }
+    }
+}
