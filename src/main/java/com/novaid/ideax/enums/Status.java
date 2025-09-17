@@ -1,5 +1,5 @@
 package com.novaid.ideax.enums;
 
 public enum Status {
-    INACTIVE,ACTIVE,BANNED,
+    INACTIVE,ACTIVE,BANNED,DELETED
 }

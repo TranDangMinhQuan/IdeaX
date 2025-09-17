@@ -6,8 +6,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.Nationalized;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "startup_profile")
 @Getter
 @Setter
@@ -64,6 +68,9 @@ public class StartupProfile {
     @Size(max = 2000)
     @Column(name = "about_us", length = 2000)
     private String aboutUs;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     // Quan hệ 1-1 với Account
     @OneToOne(fetch = FetchType.LAZY)
