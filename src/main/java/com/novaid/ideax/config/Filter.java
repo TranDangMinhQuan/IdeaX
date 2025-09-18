@@ -99,7 +99,7 @@ public class Filter extends OncePerRequestFilter {
             // ⚡ Convert Account -> UserDetails thay vì nhét thẳng Account
             UserDetails userDetails = User.withUsername(account.getEmail())
                     .password(account.getPassword()) // password encode
-                    .authorities(account.getRole().name())
+                    .authorities("ROLE_"+account.getRole().name())
                     .build();
 
             UsernamePasswordAuthenticationToken authToken =

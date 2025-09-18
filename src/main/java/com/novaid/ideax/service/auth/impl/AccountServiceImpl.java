@@ -87,4 +87,22 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new RuntimeException("Account not found"));
         return modelMapper.map(acc, AccountResponse.class);
     }
+
+    @Override
+    public void softDelete(Long id) {
+        Account acc = accountRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        acc.setStatus(Status.DELETED); // cần thêm DELETED trong enum Status
+        accountRepo.save(acc);
+    }
+
+    @Override
+    public void hardDelete(Long id) {
+        Account acc = accountRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        accountRepo.delete(acc);
+    }
+
 }

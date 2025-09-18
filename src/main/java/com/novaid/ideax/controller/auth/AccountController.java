@@ -70,5 +70,23 @@ public class AccountController {
         accountService.adminSetStatus(adminId, targetId, status);
         return ResponseEntity.ok("Target account status updated successfully");
     }
+
+    // Xóa mềm (soft delete): đổi status sang DELETED
+    @DeleteMapping("/{id}/soft")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> softDeleteAccount(@PathVariable Long id) {
+        accountService.softDelete(id);
+        return ResponseEntity.ok("Account soft deleted successfully");
+    }
+
+    // Xóa cứng (hard delete): xóa luôn trong DB
+    @DeleteMapping("/{id}/hard")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> hardDeleteAccount(@PathVariable Long id) {
+        accountService.hardDelete(id);
+        return ResponseEntity.ok("Account hard deleted successfully");
+    }
+
+
 }
 

@@ -6,8 +6,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.Nationalized;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "investor_profile")
 @Getter
 @Setter
@@ -61,6 +65,9 @@ public class InvestorProfile {
     @Nationalized
     @Column(name = "investment_experience", length = 1000)
     private String investmentExperience;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     // Quan hệ 1-1 với Account
     @OneToOne(fetch = FetchType.LAZY)

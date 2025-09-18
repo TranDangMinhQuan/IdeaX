@@ -20,4 +20,6 @@ public interface AccountService {
     void adminSetStatus(Long adminId, Long targetId, Status status);
 
     AccountResponse getAccountById(Long id);
+    void softDelete(Long id);
+    void hardDelete(Long id);
 }

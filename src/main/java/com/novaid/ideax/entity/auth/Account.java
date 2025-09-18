@@ -4,6 +4,8 @@ import com.novaid.ideax.enums.Role;
 import com.novaid.ideax.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +15,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "accounts")
 @Getter
 @Setter
@@ -39,7 +42,11 @@ public class Account implements UserDetails {
     @Column(nullable = false)
     private Status status;
 
+    @Column(name = "created_at", updatable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
+    @Column(name = "update_at", updatable = false)
+    @CreationTimestamp
     private LocalDateTime updatedAt;
 
     // Quan hệ 1-1 với StartupProfile
