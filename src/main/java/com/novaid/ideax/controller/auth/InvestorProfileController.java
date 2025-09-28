@@ -21,14 +21,14 @@ public class InvestorProfileController {
 
     // GET profile theo accountId
     @GetMapping("/{accountId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','INVESTOR')")
     public ResponseEntity<InvestorProfile> getProfile(@PathVariable Long accountId) {
         return ResponseEntity.ok(investorProfileService.getProfile(accountId));
     }
 
     // UPDATE profile theo accountId
     @PutMapping("/{accountId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','INVESTOR')")
     public ResponseEntity<InvestorProfile> updateProfile(@PathVariable Long accountId,
                                                          @RequestBody InvestorProfileUpdateDTO dto) {
         return ResponseEntity.ok(investorProfileService.updateProfile(accountId, dto));
