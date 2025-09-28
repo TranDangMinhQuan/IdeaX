@@ -19,14 +19,14 @@ public class StartupProfileController {
 
     // GET profile theo accountId
     @GetMapping("/{accountId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','START_UP')")
     public ResponseEntity<StartupProfile> getProfile(@PathVariable Long accountId) {
         return ResponseEntity.ok(startupProfileService.getProfile(accountId));
     }
 
     // UPDATE profile theo accountId
     @PutMapping("/{accountId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','START_UP')")
     public ResponseEntity<StartupProfile> updateProfile(@PathVariable Long accountId,
                                                         @RequestBody StartupProfileUpdateDTO dto) {
         return ResponseEntity.ok(startupProfileService.updateProfile(accountId, dto));
