@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/startup/profile")
@@ -30,5 +32,14 @@ public class StartupProfileController {
     public ResponseEntity<StartupProfile> updateProfile(@PathVariable Long accountId,
                                                         @RequestBody StartupProfileUpdateDTO dto) {
         return ResponseEntity.ok(startupProfileService.updateProfile(accountId, dto));
+    }
+
+    // UPLOAD profile picture
+    @PostMapping(value = "/{accountId}/upload", consumes = {"multipart/form-data"})
+    @PreAuthorize("hasAnyRole('ADMIN','START_UP')")
+    public ResponseEntity<StartupProfile> uploadProfilePicture(@PathVariable Long accountId,
+                                                               @RequestPart("file") MultipartFile file,
+                                                               HttpServletRequest request) {
+        return ResponseEntity.ok(startupProfileService.uploadProfilePicture(accountId, file, request));
     }
 }
