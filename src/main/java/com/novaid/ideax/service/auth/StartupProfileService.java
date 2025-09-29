@@ -6,4 +6,5 @@ import com.novaid.ideax.entity.auth.StartupProfile;
 public interface StartupProfileService {
     StartupProfile updateProfile(Long accountId, StartupProfileUpdateDTO dto);
     StartupProfile getProfile(Long accountId);
+    StartupProfile uploadProfilePicture(Long accountId, org.springframework.web.multipart.MultipartFile file, javax.servlet.http.HttpServletRequest request);
 }
