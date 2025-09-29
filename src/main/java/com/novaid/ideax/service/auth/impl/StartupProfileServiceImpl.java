@@ -7,12 +7,15 @@ import com.novaid.ideax.repository.auth.StartupProfileRepository;
 import com.novaid.ideax.service.auth.StartupProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Service
 @RequiredArgsConstructor
@@ -64,13 +67,19 @@ public class StartupProfileServiceImpl implements StartupProfileService {
             if (!Files.exists(uploadDir)) {
                 Files.createDirectories(uploadDir);
             }
-            String filename = "startup-" + accountId + "-" + System.currentTimeMillis() + "-" + file.getOriginalFilename();
-            Path target = uploadDir.resolve(filename);
-            Files.copy(file.getInputStream(), target);
+        String originalName = file.getOriginalFilename();
+        // sanitize filename: replace whitespace and potentially problematic chars
+        String safeOriginal = originalName == null ? "file" : originalName.replaceAll("\\s+", "_");
+        String filename = "startup-" + accountId + "-" + System.currentTimeMillis() + "-" + safeOriginal;
+        Path target = uploadDir.resolve(filename);
+        Files.copy(file.getInputStream(), target);
 
-            String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-            String url = baseUrl + "/" + target.toString().replace("\\", "/");
-            profile.setProfilePictureUrl(url);
+        // Build a context-relative URL and let the builder encode it properly
+        String url = ServletUriComponentsBuilder.fromCurrentContextPath()
+            .path("/uploads/")
+            .path(filename)
+            .toUriString();
+        profile.setProfilePictureUrl(url);
             return startupProfileRepository.save(profile);
         } catch (IOException e) {
             throw new RuntimeException("Could not store file", e);

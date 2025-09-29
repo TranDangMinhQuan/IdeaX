@@ -46,7 +46,9 @@ public class Filter extends OncePerRequestFilter {
             "GET:/swagger-ui/**",
             "GET:/v3/api-docs/**",
             "GET:/swagger-resources/**",
-            "GET:/webjars/**",
+        "GET:/webjars/**",
+        // Allow public access to uploaded static files
+        "GET:/uploads/**",
             "GET:/swagger-ui.html"
     );
 
