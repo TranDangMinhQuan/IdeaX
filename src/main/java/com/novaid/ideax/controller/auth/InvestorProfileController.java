@@ -3,6 +3,7 @@ package com.novaid.ideax.controller.auth;
 
 import com.novaid.ideax.dto.account.InvestorProfileUpdateDTO;
 import com.novaid.ideax.entity.auth.InvestorProfile;
+import com.novaid.ideax.dto.account.InvestorProfileResponse;
 
 import com.novaid.ideax.service.auth.InvestorProfileService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -22,15 +23,39 @@ public class InvestorProfileController {
     // GET profile theo accountId
     @GetMapping("/{accountId}")
     @PreAuthorize("hasAnyRole('ADMIN','INVESTOR')")
-    public ResponseEntity<InvestorProfile> getProfile(@PathVariable Long accountId) {
-        return ResponseEntity.ok(investorProfileService.getProfile(accountId));
+    public ResponseEntity<InvestorProfileResponse> getProfile(@PathVariable Long accountId) {
+        InvestorProfile profile = investorProfileService.getProfile(accountId);
+        InvestorProfileResponse dto = InvestorProfileResponse.builder()
+                .fullName(profile.getFullName())
+                .organization(profile.getOrganization())
+                .investmentFocus(profile.getInvestmentFocus())
+                .investmentRange(profile.getInvestmentRange())
+                .investmentExperience(profile.getInvestmentExperience())
+                .country(profile.getCountry())
+                .phoneNumber(profile.getPhoneNumber())
+                .linkedInUrl(profile.getLinkedInUrl())
+                .twoFactorEnabled(profile.getTwoFactorEnabled())
+                .build();
+        return ResponseEntity.ok(dto);
     }
 
     // UPDATE profile theo accountId
     @PutMapping("/{accountId}")
     @PreAuthorize("hasAnyRole('ADMIN','INVESTOR')")
-    public ResponseEntity<InvestorProfile> updateProfile(@PathVariable Long accountId,
+    public ResponseEntity<InvestorProfileResponse> updateProfile(@PathVariable Long accountId,
                                                          @RequestBody InvestorProfileUpdateDTO dto) {
-        return ResponseEntity.ok(investorProfileService.updateProfile(accountId, dto));
+        InvestorProfile profile = investorProfileService.updateProfile(accountId, dto);
+        InvestorProfileResponse response = InvestorProfileResponse.builder()
+                .fullName(profile.getFullName())
+                .organization(profile.getOrganization())
+                .investmentFocus(profile.getInvestmentFocus())
+                .investmentRange(profile.getInvestmentRange())
+                .investmentExperience(profile.getInvestmentExperience())
+                .country(profile.getCountry())
+                .phoneNumber(profile.getPhoneNumber())
+                .linkedInUrl(profile.getLinkedInUrl())
+                .twoFactorEnabled(profile.getTwoFactorEnabled())
+                .build();
+        return ResponseEntity.ok(response);
     }
 }

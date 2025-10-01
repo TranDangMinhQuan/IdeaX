@@ -130,13 +130,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         } else if (account.getRole() == Role.INVESTOR) {
             InvestorProfile profile = investorRepository.findByAccount(account)
                     .orElseThrow(() -> new AuthenticationException("Investor profile not found"));
-            InvestorProfileResponse dto = InvestorProfileResponse.builder()
-                    .fullName(profile.getFullName())
-                    .organization(profile.getOrganization())
-                    .investmentFocus(profile.getInvestmentFocus())
-                    .investmentRange(profile.getInvestmentRange())
-                    .investmentExperience(profile.getInvestmentExperience())
-                    .build();
+        InvestorProfileResponse dto = InvestorProfileResponse.builder()
+            .fullName(profile.getFullName())
+            .organization(profile.getOrganization())
+            .investmentFocus(profile.getInvestmentFocus())
+            .investmentRange(profile.getInvestmentRange())
+            .investmentExperience(profile.getInvestmentExperience())
+            .country(profile.getCountry())
+            .phoneNumber(profile.getPhoneNumber())
+            .linkedInUrl(profile.getLinkedInUrl())
+            .twoFactorEnabled(profile.getTwoFactorEnabled())
+            .build();
             response.setInvestorProfile(dto);
         }
 

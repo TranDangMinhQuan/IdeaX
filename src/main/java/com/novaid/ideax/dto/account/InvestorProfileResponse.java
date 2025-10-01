@@ -13,4 +13,9 @@ public class InvestorProfileResponse {
     private String investmentFocus;
     private String investmentRange;
     private String investmentExperience;
+    // New fields exposed to clients
+    private String country;
+    private String phoneNumber;
+    private String linkedInUrl;
+    private Boolean twoFactorEnabled;
 }
