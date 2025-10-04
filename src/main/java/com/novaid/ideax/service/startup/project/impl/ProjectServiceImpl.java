@@ -13,11 +13,14 @@ import com.novaid.ideax.repository.startup.project.ProjectRepository;
 import com.novaid.ideax.repository.startup.project.ProjectFileRepository;
 import com.novaid.ideax.service.startup.project.ProjectService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +31,9 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectFileRepository projectFileRepository;
     private final AccountRepository accountRepository;
+
+    @Value("${file.upload-dir:uploads}")
+    private String uploadDir;
 
     @Override
     public ProjectResponseDTO createProject(Long accountId, ProjectRequestDTO dto) {
@@ -40,20 +46,17 @@ public class ProjectServiceImpl implements ProjectService {
                 .customCategory(dto.getCustomCategory())
                 .fundingStage(dto.getFundingStage())
                 .fundingRange(dto.getFundingRange())
+                .fundingAmount(dto.getFundingAmount())
                 .teamSize(dto.getTeamSize())
                 .location(dto.getLocation())
                 .website(dto.getWebsite())
                 .description(dto.getDescription())
-                .status(dto.getStatus() != null ? dto.getStatus() : ProjectStatus.DRAFT)
+                .status(Optional.ofNullable(dto.getStatus()).orElse(ProjectStatus.DRAFT))
                 .startup(startup)
                 .build();
 
-        // Lưu entity
         Project saved = projectRepository.save(project);
-
-        // Xử lý file upload
-        handleFileUpload(saved, dto);
-
+        handleFileUpload(saved, dto, false);
         return mapToResponse(saved);
     }
 
@@ -66,19 +69,19 @@ public class ProjectServiceImpl implements ProjectService {
             throw new RuntimeException("Unauthorized to update this project");
         }
 
-        project.setProjectName(dto.getProjectName());
-        project.setCategory(dto.getCategory());
-        project.setCustomCategory(dto.getCustomCategory());
-        project.setFundingStage(dto.getFundingStage());
-        project.setFundingRange(dto.getFundingRange());
-        project.setTeamSize(dto.getTeamSize());
-        project.setLocation(dto.getLocation());
-        project.setWebsite(dto.getWebsite());
-        project.setDescription(dto.getDescription());
-        project.setStatus(dto.getStatus());
+        // update non-null fields
+        if (dto.getProjectName() != null) project.setProjectName(dto.getProjectName());
+        if (dto.getCategory() != null) project.setCategory(dto.getCategory());
+        if (dto.getCustomCategory() != null) project.setCustomCategory(dto.getCustomCategory());
+        if (dto.getFundingStage() != null) project.setFundingStage(dto.getFundingStage());
+        if (dto.getFundingRange() != null) project.setFundingRange(dto.getFundingRange());
+        if (dto.getTeamSize() != null) project.setTeamSize(dto.getTeamSize());
+        if (dto.getLocation() != null) project.setLocation(dto.getLocation());
+        if (dto.getWebsite() != null) project.setWebsite(dto.getWebsite());
+        if (dto.getDescription() != null) project.setDescription(dto.getDescription());
+        if (dto.getStatus() != null) project.setStatus(dto.getStatus());
 
-        handleFileUpload(project, dto);
-
+        handleFileUpload(project, dto, true);
         return mapToResponse(project);
     }
 
@@ -86,32 +89,28 @@ public class ProjectServiceImpl implements ProjectService {
     public void deleteProject(Long accountId, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
-
         if (!project.getStartup().getId().equals(accountId)) {
-            throw new RuntimeException("Unauthorized to delete this project");
+            throw new RuntimeException("Unauthorized");
         }
 
+        // Xóa file vật lý
+        project.getFiles().forEach(f -> deleteOldFileIfExists(f.getFileUrl()));
         projectRepository.delete(project);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public ProjectResponseDTO getProjectById(Long projectId) {
-        Project project = projectRepository.findById(projectId)
+        return projectRepository.findById(projectId)
+                .map(this::mapToResponse)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
-        return mapToResponse(project);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<ProjectResponseDTO> getMyProjects(Long accountId) {
         return projectRepository.findByStartup_Id(accountId)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
-    // --- Admin ---
     @Override
     public ProjectResponseDTO approveProject(Long projectId) {
         Project project = projectRepository.findById(projectId)
@@ -129,30 +128,62 @@ public class ProjectServiceImpl implements ProjectService {
         return mapToResponse(project);
     }
 
-    // --- Helpers ---
-    private void handleFileUpload(Project project, ProjectRequestDTO dto) {
-        saveFileIfPresent(project, dto.getPitchDeck(), FileType.PITCH_DECK);
-        saveFileIfPresent(project, dto.getPitchVideo(), FileType.PITCH_VIDEO);
-        saveFileIfPresent(project, dto.getBusinessPlan(), FileType.BUSINESS_PLAN);
-        saveFileIfPresent(project, dto.getFinancialProjection(), FileType.FINANCIAL_PROJECTION);
+    // === FILE HANDLING ===
+    private void handleFileUpload(Project project, ProjectRequestDTO dto, boolean isUpdate) {
+        saveFile(project, dto.getPitchDeck(), FileType.PITCH_DECK, isUpdate);
+        saveFile(project, dto.getPitchVideo(), FileType.PITCH_VIDEO, isUpdate);
+        saveFile(project, dto.getBusinessPlan(), FileType.BUSINESS_PLAN, isUpdate);
+        saveFile(project, dto.getFinancialProjection(), FileType.FINANCIAL_PROJECTION, isUpdate);
     }
 
-    private void saveFileIfPresent(Project project, MultipartFile file, FileType type) {
-        if (file != null && !file.isEmpty()) {
-            try {
-                // 👉 Ở đây bạn có thể upload lên AWS S3 / local storage, mình tạm lưu đường dẫn giả
-                String fileUrl = "/uploads/" + file.getOriginalFilename();
+    private void saveFile(Project project, MultipartFile file, FileType type, boolean isUpdate) {
+        if (file == null || file.isEmpty()) return;
 
-                ProjectFile projectFile = ProjectFile.builder()
-                        .project(project)
-                        .fileType(type)
-                        .fileUrl(fileUrl)
-                        .build();
+        // Nếu update, xóa file cũ cùng loại
+        if (isUpdate) {
+            project.getFiles().stream()
+                    .filter(f -> f.getFileType() == type)
+                    .findFirst()
+                    .ifPresent(existing -> {
+                        deleteOldFileIfExists(existing.getFileUrl());
+                        projectFileRepository.delete(existing);
+                    });
+        }
 
-                projectFileRepository.save(projectFile);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to save file: " + type, e);
-            }
+        // tạo thư mục
+        try {
+            Path uploadPath = Paths.get(uploadDir);
+            if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
+
+            String ext = Optional.ofNullable(file.getOriginalFilename())
+                    .filter(f -> f.contains("."))
+                    .map(f -> f.substring(f.lastIndexOf(".")))
+                    .orElse("");
+            String newName = UUID.randomUUID() + ext;
+            Path path = uploadPath.resolve(newName);
+            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+            String url = "/uploads/" + newName;
+            ProjectFile pf = ProjectFile.builder()
+                    .project(project)
+                    .fileType(type)
+                    .fileUrl(url)
+                    .build();
+            projectFileRepository.save(pf);
+            project.getFiles().add(pf);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save file: " + e.getMessage());
+        }
+    }
+
+    private void deleteOldFileIfExists(String fileUrl) {
+        if (fileUrl == null || fileUrl.isBlank()) return;
+        try {
+            Path path = Paths.get(uploadDir).resolve(fileUrl.replace("/uploads/", ""));
+            if (Files.exists(path)) Files.delete(path);
+        } catch (IOException e) {
+            System.out.println("⚠️ Failed to delete file: " + e.getMessage());
         }
     }
 
@@ -164,6 +195,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .customCategory(project.getCustomCategory())
                 .fundingStage(project.getFundingStage())
                 .fundingRange(project.getFundingRange())
+                .fundingAmount(project.getFundingAmount())
                 .teamSize(project.getTeamSize())
                 .location(project.getLocation())
                 .website(project.getWebsite())
@@ -174,10 +206,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .createdAt(project.getCreatedAt())
                 .updatedAt(project.getUpdatedAt())
                 .files(project.getFiles().stream()
-                        .map(f -> ProjectFileDTO.builder()
-                                .fileType(f.getFileType())
-                                .fileUrl(f.getFileUrl())
-                                .build())
+                        .map(f -> new ProjectFileDTO(f.getFileType(), f.getFileUrl()))
                         .collect(Collectors.toList()))
                 .build();
     }
