@@ -2,7 +2,6 @@ package com.novaid.ideax.dto.startup.project;
 
 import com.novaid.ideax.enums.FileType;
 import lombok.*;
-
 @Getter
 @Setter
 @NoArgsConstructor

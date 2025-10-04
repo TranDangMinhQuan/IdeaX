@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findByStartup_Id(Long accountId);
-    List<Project> findByStatus(ProjectStatus status);
+//    List<Project> findByStatus(ProjectStatus status);
 }

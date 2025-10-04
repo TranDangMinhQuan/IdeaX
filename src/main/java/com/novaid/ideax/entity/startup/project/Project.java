@@ -10,10 +10,10 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 @Entity
 @Table(name = "projects")
 @Getter
@@ -22,7 +22,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class Project {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,35 +30,25 @@ public class Project {
     private String projectName;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private Category category;
 
     private String customCategory;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private FundingStage fundingStage;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private FundingRange fundingRange;
 
     private Integer teamSize;
-
     private String location;
-
     private String website;
-
+    private BigDecimal fundingAmount;
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    private String pitchDeckUrl;
-    private String pitchVideoUrl;
-    private String businessPlanUrl;
-    private String financialProjectionUrl;
-
     @Enumerated(EnumType.STRING)
-    private ProjectStatus status; // DRAFT or PUBLISHED
+    private ProjectStatus status;
 
     @Column(columnDefinition = "TEXT")
     private String adminNote;
@@ -69,10 +58,8 @@ public class Project {
     private Account startup;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ProjectFile> files = new ArrayList<>();
-
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Milestone> milestones = new ArrayList<>();
 
     @CreationTimestamp
     private LocalDateTime createdAt;

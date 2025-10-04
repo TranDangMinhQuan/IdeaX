@@ -7,9 +7,9 @@ import com.novaid.ideax.enums.FundingStage;
 import com.novaid.ideax.enums.ProjectStatus;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,6 +22,7 @@ public class ProjectResponseDTO {
     private String customCategory;
     private FundingStage fundingStage;
     private FundingRange fundingRange;
+    private BigDecimal fundingAmount;
     private Integer teamSize;
     private String location;
     private String website;

@@ -12,7 +12,7 @@ public interface ProjectService {
     ProjectResponseDTO getProjectById(Long projectId);
     List<ProjectResponseDTO> getMyProjects(Long accountId);
 
-    // --- Admin ---
+    // Admin
     ProjectResponseDTO approveProject(Long projectId);
     ProjectResponseDTO rejectProject(Long projectId, String note);
 }

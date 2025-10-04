@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -38,7 +36,6 @@ public class Filter extends OncePerRequestFilter {
     @Autowired
     private AuthenticationRepository authenticationRepository;
 
-    // Các API public (không cần token)
     private final List<String> PUBLIC_API = List.of(
             "POST:/auth/register/startup",
             "POST:/auth/register/investor",
@@ -46,9 +43,8 @@ public class Filter extends OncePerRequestFilter {
             "GET:/swagger-ui/**",
             "GET:/v3/api-docs/**",
             "GET:/swagger-resources/**",
-        "GET:/webjars/**",
-        // Allow public access to uploaded static files
-        "GET:/uploads/**",
+            "GET:/webjars/**",
+            "GET:/uploads/**",
             "GET:/swagger-ui.html"
     );
 
@@ -70,13 +66,13 @@ public class Filter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         String method = request.getMethod();
 
-        // Nếu API public thì bỏ qua filter
+        // ✅ Bỏ qua các API public
         if (isPublicAPI(uri, method)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Lấy token
+        // ✅ Lấy token từ header
         String token = getToken(request);
         if (token == null) {
             resolver.resolveException(request, response, null,
@@ -97,21 +93,16 @@ public class Filter extends OncePerRequestFilter {
             return;
         }
 
-        if (account != null) {
-            // ⚡ Convert Account -> UserDetails thay vì nhét thẳng Account
-            UserDetails userDetails = User.withUsername(account.getEmail())
-                    .password(account.getPassword()) // password encode
-                    .authorities("ROLE_"+account.getRole().name())
-                    .build();
-
+        // ✅ Nếu token hợp lệ → gán Account vào SecurityContext
+        if (account != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            token,
-                            userDetails.getAuthorities()
+                            account, // ⚡ Gán chính Account
+                            null,
+                            account.getAuthorities() // lấy quyền từ Account implements UserDetails
                     );
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
 

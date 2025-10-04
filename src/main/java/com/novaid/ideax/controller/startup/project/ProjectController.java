@@ -30,7 +30,7 @@ public class ProjectController {
     }
 
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     public ResponseEntity<ProjectResponseDTO> updateProject(
             @PathVariable Long id,
             @ModelAttribute ProjectRequestDTO dto,
@@ -39,7 +39,6 @@ public class ProjectController {
         Account account = (Account) authentication.getPrincipal();
         return ResponseEntity.ok(projectService.updateProject(account.getId(), id, dto));
     }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProject(
             @PathVariable Long id,

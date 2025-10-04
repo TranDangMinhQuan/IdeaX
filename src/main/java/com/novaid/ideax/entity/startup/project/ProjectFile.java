@@ -3,7 +3,6 @@ package com.novaid.ideax.entity.startup.project;
 import com.novaid.ideax.enums.FileType;
 import jakarta.persistence.*;
 import lombok.*;
-
 @Entity
 @Table(name = "project_files")
 @Getter
@@ -12,7 +11,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ProjectFile {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
