@@ -18,4 +18,6 @@ public class InvestorProfileResponse {
     private String phoneNumber;
     private String linkedInUrl;
     private Boolean twoFactorEnabled;
+    // creation time to show 'Joined' on frontend
+    private java.time.LocalDateTime createdAt;
 }

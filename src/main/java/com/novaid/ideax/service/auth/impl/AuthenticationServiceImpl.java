@@ -99,7 +99,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
         Account account = accountRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new AuthenticationException("User not found"));
-
+        // Prevent login if account is banned
+        if (account.getStatus() == com.novaid.ideax.enums.Status.BANNED) {
+            throw new AuthenticationException("Account is banned");
+        }
         if (!passwordEncoder.matches(loginRequest.getPassword(), account.getPassword())) {
             throw new AuthenticationException("Invalid username or password");
         }
@@ -109,7 +112,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .email(account.getEmail())
                 .role(account.getRole())
                 .status(account.getStatus())
-                .token(tokenService.generateToken(account))
+        .token(tokenService.generateToken(account))
+        .createdAt(account.getCreatedAt())
                 .build();
 
         LoginResponseDTO response = new LoginResponseDTO();
@@ -140,6 +144,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             .phoneNumber(profile.getPhoneNumber())
             .linkedInUrl(profile.getLinkedInUrl())
             .twoFactorEnabled(profile.getTwoFactorEnabled())
+            .createdAt(profile.getCreatedAt())
             .build();
             response.setInvestorProfile(dto);
         }

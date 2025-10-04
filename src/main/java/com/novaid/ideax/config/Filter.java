@@ -98,6 +98,12 @@ public class Filter extends OncePerRequestFilter {
         }
 
         if (account != null) {
+            // If account is banned, reject immediately so existing tokens cannot be used
+            if (account.getStatus() != null && account.getStatus().name().equals("BANNED")) {
+                resolver.resolveException(request, response, null,
+                        new AuthenticationException("Account banned"));
+                return;
+            }
             // ⚡ Convert Account -> UserDetails thay vì nhét thẳng Account
             UserDetails userDetails = User.withUsername(account.getEmail())
                     .password(account.getPassword()) // password encode
