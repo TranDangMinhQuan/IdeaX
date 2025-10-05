@@ -38,6 +38,7 @@ public class Filter extends OncePerRequestFilter {
     @Autowired
     private AuthenticationRepository authenticationRepository;
 
+    // Các API public (không cần token)
     private final List<String> PUBLIC_API = List.of(
             "POST:/auth/register/startup",
             "POST:/auth/register/investor",
@@ -45,8 +46,9 @@ public class Filter extends OncePerRequestFilter {
             "GET:/swagger-ui/**",
             "GET:/v3/api-docs/**",
             "GET:/swagger-resources/**",
-            "GET:/webjars/**",
-            "GET:/uploads/**",
+        "GET:/webjars/**",
+        // Allow public access to uploaded static files
+        "GET:/uploads/**",
             "GET:/swagger-ui.html"
     );
 
@@ -68,13 +70,13 @@ public class Filter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         String method = request.getMethod();
 
-        // ✅ Bỏ qua các API public
+        // Nếu API public thì bỏ qua filter
         if (isPublicAPI(uri, method)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // ✅ Lấy token từ header
+        // Lấy token
         String token = getToken(request);
         if (token == null) {
             resolver.resolveException(request, response, null,
@@ -117,8 +119,8 @@ public class Filter extends OncePerRequestFilter {
                             null,
                             userDetails.getAuthorities()
                     );
-
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
 

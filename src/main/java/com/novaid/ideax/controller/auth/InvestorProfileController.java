@@ -35,6 +35,7 @@ public class InvestorProfileController {
                 .phoneNumber(profile.getPhoneNumber())
                 .linkedInUrl(profile.getLinkedInUrl())
                 .twoFactorEnabled(profile.getTwoFactorEnabled())
+                .createdAt(profile.getCreatedAt())
                 .build();
         return ResponseEntity.ok(dto);
     }
@@ -55,6 +56,7 @@ public class InvestorProfileController {
                 .phoneNumber(profile.getPhoneNumber())
                 .linkedInUrl(profile.getLinkedInUrl())
                 .twoFactorEnabled(profile.getTwoFactorEnabled())
+                .createdAt(profile.getCreatedAt())
                 .build();
         return ResponseEntity.ok(response);
     }

@@ -18,4 +18,6 @@ public class AccountResponse {
     private Role role;
     private Status status;
     private String token;
+    // account creation time to support frontend 'Joined' column
+    private java.time.LocalDateTime createdAt;
 }
