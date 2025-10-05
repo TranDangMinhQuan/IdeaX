@@ -28,6 +28,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.Base64;
+
 @Service
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
@@ -54,11 +57,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
         accountRepository.save(account);
 
+        String base64Logo = null;
+        if (dto.getCompanyLogo() != null && !dto.getCompanyLogo().isEmpty()) {
+            try {
+                byte[] imageBytes = dto.getCompanyLogo().getBytes();
+                base64Logo = Base64.getEncoder().encodeToString(imageBytes);
+            } catch (IOException e) {
+                throw new RuntimeException("Không thể xử lý ảnh logo", e);
+            }
+        }
+
         StartupProfile profile = StartupProfile.builder()
                 .fullName(dto.getFullName())
                 .startupName(dto.getStartupName())
                 .companyWebsite(dto.getCompanyWebsite())
-                .companyLogo(dto.getCompanyLogo())
+                .companyLogo(base64Logo)
                 .aboutUs(dto.getAboutUs())
                 .account(account)
                 .build();

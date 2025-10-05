@@ -18,11 +18,12 @@ public class AuthController {
 
     private final AuthenticationServiceImpl authenticationService;
 
-    @PostMapping("/register/startup")
-    public ResponseEntity<String> registerStartup(@RequestBody StartupRegisterDTO dto) {
+    @PostMapping(value = "/register/startup", consumes = {"multipart/form-data"})
+    public ResponseEntity<String> registerStartup(@ModelAttribute StartupRegisterDTO dto) {
         authenticationService.registerStartup(dto);
         return ResponseEntity.ok("Startup registered successfully!");
     }
+
 
     @PostMapping("/register/investor")
     public ResponseEntity<String> registerInvestor(@RequestBody InvestorRegisterDTO dto) {

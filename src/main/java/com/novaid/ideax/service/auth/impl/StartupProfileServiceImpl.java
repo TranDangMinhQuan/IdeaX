@@ -14,6 +14,8 @@ import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -34,7 +36,6 @@ public class StartupProfileServiceImpl implements StartupProfileService {
         profile.setPhoneNumber(dto.getPhoneNumber());
         profile.setLinkedInProfile(dto.getLinkedInProfile());
         profile.setCompanyWebsite(dto.getCompanyWebsite());
-        profile.setProfilePictureUrl(dto.getProfilePictureUrl());
 
         profile.setStartupName(dto.getStartupName());
         profile.setIndustryCategory(dto.getIndustryCategory());
@@ -42,6 +43,16 @@ public class StartupProfileServiceImpl implements StartupProfileService {
         profile.setLocation(dto.getLocation());
         profile.setNumberOfTeamMembers(dto.getNumberOfTeamMembers());
         profile.setAboutUs(dto.getAboutUs());
+
+        if (dto.getProfilePictureUrl() != null && !dto.getProfilePictureUrl().isEmpty()) {
+            try {
+                byte[] imageBytes = dto.getProfilePictureUrl().getBytes();
+                String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+                profile.setProfilePictureUrl(base64Image); // lưu Base64 vào DB
+            } catch (IOException e) {
+                throw new RuntimeException("Không thể xử lý ảnh profile", e);
+            }
+        }
 
         return startupProfileRepository.save(profile);
     }

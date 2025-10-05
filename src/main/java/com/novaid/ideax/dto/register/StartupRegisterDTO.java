@@ -1,6 +1,7 @@
 package com.novaid.ideax.dto.register;
 
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
@@ -18,6 +19,6 @@ public class StartupRegisterDTO {
     private String fullName;
     private String startupName;
     private String companyWebsite;
-    private String companyLogo;
+    private MultipartFile companyLogo;
     private String aboutUs;
 }
