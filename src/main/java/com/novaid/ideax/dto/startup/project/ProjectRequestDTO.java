@@ -27,7 +27,7 @@ public class ProjectRequestDTO {
     private FundingStage fundingStage;
     private FundingRange fundingRange;
     private BigDecimal fundingAmount;
-    private Double projectSize;
+
     private Integer teamSize;
     private String location;
     private String website;

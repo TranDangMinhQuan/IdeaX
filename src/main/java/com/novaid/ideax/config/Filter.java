@@ -97,23 +97,26 @@ public class Filter extends OncePerRequestFilter {
             return;
         }
 
-        if (account != null) {
-            // If account is banned, reject immediately so existing tokens cannot be used
+        // ✅ Nếu token hợp lệ → xác thực người dùng
+        if (account != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            // 🚫 Check tài khoản bị ban
             if (account.getStatus() != null && account.getStatus().name().equals("BANNED")) {
                 resolver.resolveException(request, response, null,
                         new AuthenticationException("Account banned"));
                 return;
             }
-            // ⚡ Convert Account -> UserDetails thay vì nhét thẳng Account
+
+            // ⚡ Tạo đối tượng UserDetails chuẩn để xác thực
             UserDetails userDetails = User.withUsername(account.getEmail())
-                    .password(account.getPassword()) // password encode
-                    .authorities("ROLE_"+account.getRole().name())
+                    .password(account.getPassword())
+                    .authorities("ROLE_" + account.getRole().name())
                     .build();
 
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            token,
+                            account,
+                            null,
                             userDetails.getAuthorities()
                     );
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
