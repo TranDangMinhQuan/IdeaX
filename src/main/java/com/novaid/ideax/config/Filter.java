@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -93,13 +95,27 @@ public class Filter extends OncePerRequestFilter {
             return;
         }
 
-        // ✅ Nếu token hợp lệ → gán Account vào SecurityContext
+        // ✅ Nếu token hợp lệ → xác thực người dùng
         if (account != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            // 🚫 Check tài khoản bị ban
+            if (account.getStatus() != null && account.getStatus().name().equals("BANNED")) {
+                resolver.resolveException(request, response, null,
+                        new AuthenticationException("Account banned"));
+                return;
+            }
+
+            // ⚡ Tạo đối tượng UserDetails chuẩn để xác thực
+            UserDetails userDetails = User.withUsername(account.getEmail())
+                    .password(account.getPassword())
+                    .authorities("ROLE_" + account.getRole().name())
+                    .build();
+
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(
-                            account, // ⚡ Gán chính Account
+                            account,
                             null,
-                            account.getAuthorities() // lấy quyền từ Account implements UserDetails
+                            userDetails.getAuthorities()
                     );
 
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
