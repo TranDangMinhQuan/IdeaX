@@ -1,6 +1,7 @@
 package com.novaid.ideax.dto.account;
 
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
@@ -12,8 +13,7 @@ public class StartupProfileUpdateDTO {
     private String phoneNumber;
     private String linkedInProfile;
     private String companyWebsite;
-    private String profilePictureUrl;
-
+    private MultipartFile profilePictureUrl;
     private String startupName;
     private String industryCategory;
     private String fundingStage;

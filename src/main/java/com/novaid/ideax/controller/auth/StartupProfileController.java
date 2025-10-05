@@ -26,20 +26,24 @@ public class StartupProfileController {
         return ResponseEntity.ok(startupProfileService.getProfile(accountId));
     }
 
-    // UPDATE profile theo accountId
-    @PutMapping("/{accountId}")
+    // ✅ UPDATE profile (cho phép upload file ảnh)
+    @PutMapping(value = "/{accountId}", consumes = {"multipart/form-data"})
     @PreAuthorize("hasAnyRole('ADMIN','START_UP')")
-    public ResponseEntity<StartupProfile> updateProfile(@PathVariable Long accountId,
-                                                        @RequestBody StartupProfileUpdateDTO dto) {
+    public ResponseEntity<StartupProfile> updateProfile(
+            @PathVariable Long accountId,
+            @ModelAttribute StartupProfileUpdateDTO dto // ← đổi từ @RequestBody sang @ModelAttribute
+    ) {
         return ResponseEntity.ok(startupProfileService.updateProfile(accountId, dto));
     }
 
-    // UPLOAD profile picture
+    // (Tuỳ chọn) API upload ảnh riêng — nếu bạn vẫn muốn giữ
     @PostMapping(value = "/{accountId}/upload", consumes = {"multipart/form-data"})
     @PreAuthorize("hasAnyRole('ADMIN','START_UP')")
-    public ResponseEntity<StartupProfile> uploadProfilePicture(@PathVariable Long accountId,
-                                                               @RequestPart("file") MultipartFile file,
-                                                               HttpServletRequest request) {
+    public ResponseEntity<StartupProfile> uploadProfilePicture(
+            @PathVariable Long accountId,
+            @RequestPart("file") MultipartFile file,
+            HttpServletRequest request
+    ) {
         return ResponseEntity.ok(startupProfileService.uploadProfilePicture(accountId, file, request));
     }
 }
