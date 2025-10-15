@@ -10,15 +10,19 @@ import com.novaid.ideax.dto.register.StartupRegisterDTO;
 import com.novaid.ideax.entity.auth.Account;
 import com.novaid.ideax.entity.auth.InvestorProfile;
 import com.novaid.ideax.entity.auth.StartupProfile;
+import com.novaid.ideax.entity.payment.Wallet;
+import com.novaid.ideax.entity.project.FileStorage;
 import com.novaid.ideax.enums.Role;
 import com.novaid.ideax.enums.Status;
 import com.novaid.ideax.exception.AuthenticationException;
 import com.novaid.ideax.repository.auth.AccountRepository;
 import com.novaid.ideax.repository.auth.InvestorRepository;
 import com.novaid.ideax.repository.auth.StartupRepository;
+import com.novaid.ideax.repository.payment.WalletRepository;
 import com.novaid.ideax.service.auth.AuthenticationService;
 import com.novaid.ideax.service.auth.EmailService;
 import com.novaid.ideax.service.auth.TokenService;
+import com.novaid.ideax.service.project.impl.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,6 +33,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Base64;
 
 @Service
@@ -41,7 +46,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final InvestorRepository investorRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
-    private final EmailService emailService;
+    private final FileStorageService fileStorageService;
+//    private final EmailService emailService;
+    private final WalletRepository walletRepository;
 
     // === REGISTER STARTUP ===
     @Override
@@ -55,29 +62,39 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .role(Role.START_UP)
                 .status(Status.ACTIVE)
                 .build();
-        accountRepository.save(account);
+        Account savedAccount = accountRepository.save(account);
 
-        String base64Logo = null;
+        Wallet newWallet = Wallet.builder()
+                .account(savedAccount)
+                .balance(BigDecimal.ZERO) // Số dư ban đầu là 0
+                .build();
+        walletRepository.save(newWallet);
+        FileStorage logoFile = null;
         if (dto.getCompanyLogo() != null && !dto.getCompanyLogo().isEmpty()) {
-            try {
-                byte[] imageBytes = dto.getCompanyLogo().getBytes();
-                base64Logo = Base64.getEncoder().encodeToString(imageBytes);
-            } catch (IOException e) {
-                throw new RuntimeException("Không thể xử lý ảnh logo", e);
-            }
+            logoFile = fileStorageService.storeFile(dto.getCompanyLogo(), "logos", savedAccount);
         }
+
+//        String base64Logo = null;
+//        if (dto.getCompanyLogo() != null && !dto.getCompanyLogo().isEmpty()) {
+//            try {
+//                byte[] imageBytes = dto.getCompanyLogo().getBytes();
+//                base64Logo = Base64.getEncoder().encodeToString(imageBytes);
+//            } catch (IOException e) {
+//                throw new RuntimeException("Không thể xử lý ảnh logo", e);
+//            }
+//        }
 
         StartupProfile profile = StartupProfile.builder()
                 .fullName(dto.getFullName())
                 .startupName(dto.getStartupName())
                 .companyWebsite(dto.getCompanyWebsite())
-                .companyLogo(base64Logo)
+                .companyLogo(logoFile)
                 .aboutUs(dto.getAboutUs())
-                .account(account)
+                .account(savedAccount)
                 .build();
         startupRepository.save(profile);
 
-        // emailService.sendWelcomeEmail(dto.getEmail(), dto.getFullName());
+//      emailService.sendWelcomeEmail(dto.getEmail(), dto.getFullName());
     }
 
     // === REGISTER INVESTOR ===
@@ -92,7 +109,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .role(Role.INVESTOR)
                 .status(Status.ACTIVE)
                 .build();
-        accountRepository.save(account);
+        Account savedAccount = accountRepository.save(account);
+
+        Wallet newWallet = Wallet.builder()
+                .account(savedAccount)
+                .balance(BigDecimal.ZERO)
+                .build();
+        walletRepository.save(newWallet);
 
         InvestorProfile profile = InvestorProfile.builder()
                 .fullName(dto.getFullName())
@@ -100,7 +123,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .investmentFocus(dto.getInvestmentFocus())
                 .investmentRange(dto.getInvestmentRange())
                 .investmentExperience(dto.getInvestmentExperience())
-                .account(account)
+                .account(savedAccount)
                 .build();
         investorRepository.save(profile);
 
@@ -136,11 +159,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             StartupProfile profile = startupRepository.findByAccount(account)
                     .orElseThrow(() -> new AuthenticationException("Startup profile not found"));
             // dùng DTO bạn đã định nghĩa
+            String logoUrl = (profile.getCompanyLogo() != null)
+                    ? profile.getCompanyLogo().getFilePath()
+                    : null;
             StartupProfileResponse dto = StartupProfileResponse.builder()
                     .fullName(profile.getFullName())
                     .startupName(profile.getStartupName())
                     .companyWebsite(profile.getCompanyWebsite())
-                    .companyLogo(profile.getCompanyLogo())
+                    .companyLogo(logoUrl)
                     .aboutUs(profile.getAboutUs())
                     .build();
             response.setStartupProfile(dto);

@@ -1,7 +1,7 @@
 package com.novaid.ideax.entity.payment;
 
 import com.novaid.ideax.entity.auth.Account;
-import com.novaid.ideax.entity.startup.project.Project;
+import com.novaid.ideax.entity.project.Project;
 
 import com.novaid.ideax.enums.PaymentStatus;
 import jakarta.persistence.*;
