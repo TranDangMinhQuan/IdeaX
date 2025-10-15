@@ -18,7 +18,7 @@ public interface AccountService {
     void setSelfStatus(Long selfId, Status status);
 
     void adminSetStatus(Long adminId, Long targetId, Status status);
-
+    List<AccountResponse> getAllAccounts();
     AccountResponse getAccountById(Long id);
     void softDelete(Long id);
     void hardDelete(Long id);

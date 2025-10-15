@@ -186,6 +186,13 @@ public class ProjectServiceImpl implements ProjectService {
             System.out.println("⚠️ Failed to delete file: " + e.getMessage());
         }
     }
+    @Override
+    public List<ProjectResponseDTO> getAllProjects() {
+        return projectRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
 
     private ProjectResponseDTO mapToResponse(Project project) {
         return ProjectResponseDTO.builder()

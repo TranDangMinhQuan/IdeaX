@@ -86,6 +86,11 @@ public class AccountController {
         accountService.hardDelete(id);
         return ResponseEntity.ok("Account hard deleted successfully");
     }
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<AccountResponse>> getAllAccounts() {
+        return ResponseEntity.ok(accountService.getAllAccounts());
+    }
 
 
 }

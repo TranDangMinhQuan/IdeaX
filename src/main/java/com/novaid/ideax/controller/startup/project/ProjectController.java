@@ -74,4 +74,9 @@ public class ProjectController {
             @RequestParam String note) {
         return ResponseEntity.ok(projectService.rejectProject(id, note));
     }
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ProjectResponseDTO>> getAllProjects() {
+        return ResponseEntity.ok(projectService.getAllProjects());
+    }
 }

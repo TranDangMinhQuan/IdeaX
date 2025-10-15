@@ -7,5 +7,6 @@ public enum ProjectStatus {
     DRAFT,
     PUBLISHED,
     APPROVED,
-    REJECTED
+    REJECTED,
+    COMPLETE
 }

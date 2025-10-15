@@ -11,7 +11,7 @@ public interface ProjectService {
     void deleteProject(Long accountId, Long projectId);
     ProjectResponseDTO getProjectById(Long projectId);
     List<ProjectResponseDTO> getMyProjects(Long accountId);
-
+    List<ProjectResponseDTO> getAllProjects();
     // Admin
     ProjectResponseDTO approveProject(Long projectId);
     ProjectResponseDTO rejectProject(Long projectId, String note);
