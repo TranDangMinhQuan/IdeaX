@@ -22,6 +22,9 @@ public class Wallet {
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal balance = BigDecimal.ZERO;
 
+    @Column(nullable = false, precision = 19, scale = 4)
+    @Builder.Default // Đảm bảo số dư khóa mặc định là 0 khi tạo mới
+    private BigDecimal lockedBalance = BigDecimal.ZERO;
     @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL)
     private List<Transaction> transactions;
 }

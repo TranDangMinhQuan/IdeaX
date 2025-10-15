@@ -5,6 +5,7 @@ import com.novaid.ideax.entity.auth.Account;
 
 import com.novaid.ideax.service.payment.PaymentService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -23,7 +26,7 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @GetMapping("/wallet/me")
-    @PreAuthorize("hasAnyRole('INVESTOR', 'STARTUP')")
+    @PreAuthorize("hasAnyRole('INVESTOR', 'START_UP')")
     public ResponseEntity<WalletResponseDTO> getMyWallet(Authentication authentication) {
         Account account = (Account) authentication.getPrincipal();
         return ResponseEntity.ok(paymentService.getMyWallet(account.getId()));
@@ -57,7 +60,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.refundPayment(payer.getId(), paymentId, dto));
     }
     @GetMapping("/transactions/history")
-    @PreAuthorize("hasAnyRole('INVESTOR', 'STARTUP')")
+    @PreAuthorize("hasAnyRole('INVESTOR', 'START_UP')")
     public ResponseEntity<Page<TransactionResponseDTO>> getMyTransactionHistory(
             Authentication authentication,
             Pageable pageable) {
@@ -73,20 +76,34 @@ public class PaymentController {
         Page<TransactionResponseDTO> historyPage = paymentService.getTransactionHistoryByUserId(userId, pageable);
         return ResponseEntity.ok(historyPage);
     }
+    @GetMapping("/webhook/vnpay-return")
+    public ResponseEntity<Void> handleVnpayReturn(HttpServletRequest request) {
+        // Chuyển hướng người dùng về trang kết quả trên frontend
+        // Ví dụ: return ResponseEntity.status(HttpStatus.FOUND).location(URI.create("https://your-frontend.com/payment-result")).build();
+        return ResponseEntity.ok().build(); // Hoặc trả về một trang HTML thông báo đơn giản
+    }
+    @GetMapping("/webhook/vnpay-ipn")
+    public ResponseEntity<String> handleVnpayIPN(@RequestParam Map<String, String> allParams) {
+        String result = paymentService.processVnpayIPN(allParams);
+        return ResponseEntity.ok(result);
+    }
+    @PostMapping("/wallet/withdraw")
+    @PreAuthorize("hasAnyRole('INVESTOR', 'START_UP')")
+    public ResponseEntity<String> createWithdrawRequest(
+            Authentication authentication,
+            @Valid @RequestBody WithdrawRequestDTO dto) {
+        Account account = (Account) authentication.getPrincipal();
+        paymentService.createWithdrawRequest(account.getId(), dto);
+        return ResponseEntity.ok("Withdraw request created successfully and is pending approval.");
+    }
     @PostMapping("/wallet/deposit")
-    @PreAuthorize("hasAnyRole('INVESTOR', 'STARTUP')")
+    @PreAuthorize("hasAnyRole('INVESTOR', 'START_UP')")
     public ResponseEntity<DepositResponseDTO> createDepositRequest(
             Authentication authentication,
-            @Valid @RequestBody DepositRequestDTO dto) {
+            @Valid @RequestBody DepositRequestDTO dto,
+            HttpServletRequest request) { // Thêm HttpServletRequest
         Account account = (Account) authentication.getPrincipal();
-        return ResponseEntity.ok(paymentService.createDepositRequest(account.getId(), dto));
-    }
-    @GetMapping("/webhook/vnpay-return")
-    public ResponseEntity<String> handleVnpayReturn(
-            @RequestParam("orderId") String orderId,
-            @RequestParam("status") String status) { // Tên param tùy vào cổng thanh toán
-        paymentService.processPaymentCallback(orderId, status);
-        // Chuyển hướng người dùng về trang kết quả giao dịch trên frontend
-        return ResponseEntity.ok("Payment processed. You can close this window.");
+        // Truyền request vào service
+        return ResponseEntity.ok(paymentService.createDepositRequest(account.getId(), dto, request));
     }
 }

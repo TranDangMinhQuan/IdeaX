@@ -7,7 +7,7 @@ import com.novaid.ideax.entity.auth.Account;
 import com.novaid.ideax.entity.startup.message.ChatMessage;
 import com.novaid.ideax.repository.auth.AccountRepository;
 
-import com.novaid.ideax.repository.startup.message.ChatMessageRepository;
+import com.novaid.ideax.repository.message.ChatMessageRepository;
 import com.novaid.ideax.service.startup.message.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

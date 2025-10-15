@@ -1,6 +1,7 @@
 package com.novaid.ideax.entity.auth;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.novaid.ideax.entity.project.FileStorage;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -42,8 +43,9 @@ public class StartupProfile {
     @Column(name = "profile_picture_url", length = 500)
     private String profilePictureUrl;
 
-    @Column(name = "company_logo", length = 500)
-    private String companyLogo;
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "company_logo_id", referencedColumnName = "id")
+    private FileStorage companyLogo;
 
     @Nationalized
     @Column(name = "startup_name", length = 255)
