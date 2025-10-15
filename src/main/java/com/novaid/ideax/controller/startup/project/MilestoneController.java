@@ -22,7 +22,7 @@ public class MilestoneController {
     private final MilestoneService milestoneService;
 
     // STARTUP tạo milestone cho dự án của họ
-    @PreAuthorize("hasRole('STARTUP')")
+    @PreAuthorize("hasRole('START_UP')")
     @PostMapping("/project/{projectId}")
     public ResponseEntity<MilestoneResponseDTO> createMilestone(
             @PathVariable Long projectId,
@@ -31,7 +31,7 @@ public class MilestoneController {
     }
 
     // STARTUP update milestone
-    @PreAuthorize("hasRole('STARTUP')")
+    @PreAuthorize("hasRole('START_UP')")
     @PutMapping("/{id}")
     public ResponseEntity<MilestoneResponseDTO> updateMilestone(
             @PathVariable Long id,
@@ -40,7 +40,7 @@ public class MilestoneController {
     }
 
     // STARTUP delete milestone
-    @PreAuthorize("hasRole('STARTUP')")
+    @PreAuthorize("hasRole('START_UP')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMilestone(@PathVariable Long id) {
         milestoneService.deleteMilestone(id);
@@ -48,14 +48,14 @@ public class MilestoneController {
     }
 
     // STARTUP và INVESTOR đều xem được milestones theo project
-    @PreAuthorize("hasAnyRole('STARTUP','INVESTOR')")
+    @PreAuthorize("hasAnyRole('START_UP','INVESTOR')")
     @GetMapping("/project/{projectId}")
     public ResponseEntity<List<MilestoneResponseDTO>> getMilestonesByProject(@PathVariable Long projectId) {
         return ResponseEntity.ok(milestoneService.getMilestonesByProject(projectId));
     }
 
     // STARTUP và INVESTOR đều xem chi tiết milestone
-    @PreAuthorize("hasAnyRole('STARTUP','INVESTOR')")
+    @PreAuthorize("hasAnyRole('START_UP','INVESTOR')")
     @GetMapping("/{id}")
     public ResponseEntity<MilestoneResponseDTO> getMilestoneById(@PathVariable Long id) {
         return ResponseEntity.ok(milestoneService.getMilestoneById(id));
