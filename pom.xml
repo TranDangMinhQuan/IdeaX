@@ -22,6 +22,8 @@
         <jjwt.version>0.12.3</jjwt.version>
         <springdoc.version>2.7.0</springdoc.version>
         <modelmapper.version>3.2.3</modelmapper.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
 
